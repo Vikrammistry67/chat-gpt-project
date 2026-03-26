@@ -18,7 +18,7 @@ const Navbar = () => {
     const handleLogout = async () => {
         try {
             // 1. Backend call
-            await axios.post('http://localhost:3000/api/auth/logoutUser', {}, { withCredentials: true });
+            await axios.post('https://chat-gpt-project-4iip.onrender.com/api/auth/logoutUser', {}, { withCredentials: true });
 
             // 2. Clear Frontend Context
             logout();

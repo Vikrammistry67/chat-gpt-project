@@ -25,7 +25,7 @@ const GptUI = () => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const res = await axios.get('http://localhost:3000/api/chat', { withCredentials: true });
+                const res = await axios.get('https://chat-gpt-project-4iip.onrender.com/api/chat', { withCredentials: true });
                 setRecentChats(res.data.chats || []);
             } catch (err) {
                 console.error("Error fetching sidebar:", err);
@@ -33,7 +33,7 @@ const GptUI = () => {
         };
         fetchInitialData();
 
-        const newSocket = io('http://localhost:3000', { withCredentials: true });
+        const newSocket = io('https://chat-gpt-project-4iip.onrender.com', { withCredentials: true });
         setSocket(newSocket);
 
         // FIX: Event name matches your backend "ai-generated-response"
@@ -49,7 +49,7 @@ const GptUI = () => {
         try {
             setActiveChatId(chatId);
             setIsChatting(true);
-            const res = await axios.get(`http://localhost:3000/api/chat/messages/${chatId}`, { withCredentials: true });
+            const res = await axios.get(`https://chat-gpt-project-4iip.onrender.com/api/chat/messages/${chatId}`, { withCredentials: true });
             setChatLog(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Error loading messages:", err);
@@ -60,7 +60,7 @@ const GptUI = () => {
         const title = window.prompt("New Chat Name:");
         if (!title) return;
         try {
-            const res = await axios.post('http://localhost:3000/api/chat', { title }, { withCredentials: true });
+            const res = await axios.post('https://chat-gpt-project-4iip.onrender.com/api/chat', { title }, { withCredentials: true });
             const newChat = res.data.chat || res.data;
             setRecentChats(prev => [newChat, ...prev]);
             setActiveChatId(newChat._id);

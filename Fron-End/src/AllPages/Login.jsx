@@ -35,7 +35,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/loginUser', {
+      const response = await axios.post('https://chat-gpt-project-4iip.onrender.com/api/auth/loginUser', {
         email,
         password
       }, {

@@ -30,7 +30,7 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post('http://localhost:3000/api/auth/registerUser', newUser);
+            const response = await axios.post('https://chat-gpt-project-4iip.onrender.com/api/auth/registerUser', newUser);
             if (response.status === 201 || response.status === 200) {
                 toast.success('Registration successful!');
                 setTimeout(() => navigate('/loginUser'), 1500);
