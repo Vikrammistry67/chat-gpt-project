@@ -1,24 +1,33 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// API Key yahan process.env se lo (Render par variable set hona chahiye)
+// Render ke environment variables se API Key uthao
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateResponse = async (content) => {
-    // 1. Pehle model select karo
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    // 2. Phir content generate karo
-    const result = await model.generateContent(content);
-    const response = await result.response;
-    return response.text(); // Text function hai, ise () ke saath call karo
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(content);
+        const response = await result.response;
+        return response.text();
+    } catch (error) {
+        console.error("AI Response Error:", error.message);
+        return "AI is currently busy.";
+    }
 };
 
 const generateVectors = async (content) => {
-    // Embedding ke liye bhi getGenerativeModel use hota hai
-    const model = genAI.getGenerativeModel({ model: "text-embedding-004" }); // "gemini-embedding-001" bhi chalega
+    try {
+        // 'text-embedding-004' ki jagah 'embedding-001' use karo
+        const model = genAI.getGenerativeModel({ model: "embedding-001" });
 
-    const result = await model.embedContent(content);
-    return result.embedding.values;
-};
+        const result = await model.embedContent(content);
+        const embedding = result.embedding;
+
+        return embedding.values; // Direct values return karo
+    } catch (error) {
+        console.error("Vector Generation Error:", error.message);
+        throw error;
+    }
+}
 
 module.exports = { generateResponse, generateVectors };
