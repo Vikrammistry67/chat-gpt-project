@@ -9,7 +9,7 @@ const { createMemory, queryMemory } = require('../service/vector.service');
 const initialiseSocketServer = async (httpServer) => {
     const io = new Server(httpServer, {
         cors: {
-            origin: 'http://localhost:5173',
+            origin: process.env.CLIENT_URL || 'http://localhost:5173',
             methods: ['GET', 'POST'],
             allowedHeaders: ['Content-Type', 'Authorization'],
             credentials: true,
@@ -39,100 +39,84 @@ const initialiseSocketServer = async (httpServer) => {
             console.log(`Socket ID : ${socket.id}`);
             console.log('Socket IO connected successfully !');
 
-            socket.on('ai-message', async (messagePayload) => {
-                console.log('AI-Message : ', messagePayload.content);
+            // ... existing imports ...
 
-                const message = await messageModel.create({
-                    user: socket.user._id,
-                    chat: messagePayload.chat,
-                    content: messagePayload.content,
-                    role: 'user',
-                });
-                const vectors = await generateVectors(messagePayload.content);
-                const memory = await queryMemory({
-                    queryVector: vectors,
-                    limit: 3,
-                    metadata: {},
-                })
+            socket.on('ai-message', async (messagePayload) => {
                 try {
-                    await createMemory({
+                    // 1. User ka message DB mein save karo
+                    const message = await messageModel.create({
+                        user: socket.user._id,
+                        chat: messagePayload.chat,
+                        content: messagePayload.content,
+                        role: 'user',
+                    });
+
+                    // 2. Vectors generate karo (Embedding)
+                    const vectors = await generateVectors(messagePayload.content);
+
+                    // 3. RAG: Purani yaadein nikaalo (Vector Search)
+                    const rawMemory = await queryMemory({
+                        queryVector: vectors,
+                        limit: 3
+                    });
+
+                    // 4. Background mein memory save karo (Await mat karo response ke liye)
+                    createMemory({
                         messageId: message._id,
                         vectors: vectors,
-                        metadata: {
-                            chat: messagePayload.chat,
-                            user: socket.user._id,
-                            text: messagePayload.content
-                        }
-                    })
+                        metadata: { chat: messagePayload.chat, user: socket.user._id, text: messagePayload.content }
+                    }).catch(err => console.error("Vector Save Error:", err));
 
-                } catch (error) {
-                    console.log(`ERROR at data sent createMemory to Vector DB : ${error}`)
-                };
-                const userChatHistory = (await messageModel.find({
-                    chat: messagePayload.chat
-                }).sort({ createdAt: -1 }).limit(20).lean()).reverse();
+                    // 5. Recent History fetch karo
+                    const userChatHistory = (await messageModel.find({ chat: messagePayload.chat })
+                        .sort({ createdAt: -1 }).limit(15).lean()).reverse();
 
-
-                const shortTermMemory = userChatHistory.map((chats) => {
-                    return {
+                    const shortTermMemory = userChatHistory.map(chats => ({
                         role: chats.role === 'model' || chats.role === 'ai' ? 'model' : 'user',
                         parts: [{ text: chats.content }],
+                    }));
+
+                    // 6. Context inject karo (Gemini rules ke mutabiq)
+                    let finalHistory = [...shortTermMemory];
+
+                    if (Array.isArray(rawMemory) && rawMemory.length > 0) {
+                        const contextText = rawMemory.map(item => item.metadata?.text || "").filter(t => t !== "").join('\n');
+
+                        // Pehle User context dega, phir Model accept karega (Sequence Maintain karne ke liye)
+                        finalHistory.unshift(
+                            { role: 'user', parts: [{ text: `Previous Context: ${contextText}` }] },
+                            { role: 'model', parts: [{ text: "Context received. I'm ready." }] }
+                        );
                     }
-                });
 
-                const longTermMomory = [
-                    {
-                        role: 'user',
-                        parts: [{
-                            text: `
-                            these are some previous messages from the chat, use them to generate response: 
-                            ${Array.isArray(memory)
-                                    ? memory.map(item => item.metadata?.text || "").filter(t => t !== "").join('\n')
-                                    : ""
-                                }
-                            `
-                        }]
-                    }
-                ];
+                    // 7. AI Response generate karo
+                    const response = await generateResponse(finalHistory);
 
+                    // 8. AI Response save aur emit karo
+                    const responseMessage = await messageModel.create({
+                        user: socket.user._id,
+                        chat: messagePayload.chat,
+                        content: response,
+                        role: 'model'
+                    });
 
-                console.log(`longTermMomory ---> ${longTermMomory[0].parts}`)
-                console.log(`shortTermMemory ---> ${shortTermMemory}`)
-
-
-                const response = await generateResponse([...longTermMomory, ...shortTermMemory]);
-
-                const responseMessage = await messageModel.create({
-                    user: socket.user._id,
-                    chat: messagePayload.chat,
-                    content: response,
-                    role: 'model'
-                });
-
-                const responseVectors = await generateVectors(response);
-
-                try {
-                    const memory = await createMemory({
-                        messageId: responseMessage._id,
-                        vectors: responseVectors,
-                        metadata: {
-                            chat: messagePayload.chat,
-                            user: socket.user._id,
-                            text: response
-                        }
-                    })
-                } catch (error) {
-                    console.log(`ERROR at data getting from Vector DataBase : ${error}`)
-                }
-
-                try {
                     socket.emit('ai-generated-response', {
                         content: response,
                         chat: messagePayload.chat
                     });
-                    console.log(`AI-Response Data Received Successfully !`)
+
+                    // 9. AI ka response bhi Vector DB mein save karo background mein
+                    generateVectors(response).then(v => {
+                        createMemory({
+                            messageId: responseMessage._id,
+                            vectors: v,
+                            metadata: { chat: messagePayload.chat, user: socket.user._id, text: response }
+                        });
+                    }).catch(err => console.error("AI Vector Save Error:", err));
+
                 } catch (error) {
-                    console.log(`ERROR at data receiving from an AI  : ${error}`)
+                    console.error("Socket Logic Crash:", error);
+                    socket.emit('error', { message: "Kuch galat ho gaya, phir se try karein." });
                 }
             });
         })

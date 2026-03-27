@@ -1,18 +1,16 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// API Key check
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateResponse = async (fullHistory) => {
     try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
-            systemInstruction: "You are a professional AI assistant developed by Vikram. Be concise and helpful."
-        });
+        // FIX: Model name strictly with 'models/' prefix for some SDK versions
+        const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
 
-        if (!fullHistory || fullHistory.length === 0) {
-            throw new Error("Chat history is empty.");
-        }
+        if (!fullHistory || fullHistory.length === 0) throw new Error("History empty");
 
-        // Aakhri message ko prompt banana hai, baaki ko history
+        // Aakhri message prompt nikalna
         const lastMessage = fullHistory.pop();
         const userPrompt = lastMessage.parts[0].text;
 
@@ -21,21 +19,25 @@ const generateResponse = async (fullHistory) => {
         });
 
         const result = await chat.sendMessage(userPrompt);
-        return result.response.text();
+        const response = await result.response;
+        return response.text();
 
     } catch (error) {
         console.error("Gemini Production Error:", error.message);
-        throw error; // Controller ise handle karega
+        // User ko crash nahi, fallback message dikhao
+        return "AI is temporarily unavailable. Please try again.";
     }
 };
 
 const generateVectors = async (content) => {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+        // Gemini Embedding Model
+        const model = genAI.getGenerativeModel({ model: "models/embedding-001" });
+
         const result = await model.embedContent({
             content: { parts: [{ text: content }] },
             taskType: "RETRIEVAL_DOCUMENT",
-            outputDimensionality: 768 // Pinecone compatibility
+            outputDimensionality: 768
         });
 
         return result.embedding.values;
