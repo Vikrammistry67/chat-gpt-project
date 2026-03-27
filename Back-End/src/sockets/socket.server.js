@@ -75,7 +75,7 @@ const initialiseSocketServer = async (httpServer) => {
 
                 const shortTermMemory = userChatHistory.map((chats) => {
                     return {
-                        role: chats.role,
+                        role: chats.role === 'model' || chats.role === 'ai' ? 'model' : 'user',
                         parts: [{ text: chats.content }],
                     }
                 });
@@ -115,7 +115,7 @@ const initialiseSocketServer = async (httpServer) => {
                     const memory = await createMemory({
                         messageId: responseMessage._id,
                         vectors: responseVectors,
-                        metadata: -{
+                        metadata: {
                             chat: messagePayload.chat,
                             user: socket.user._id,
                             text: response
