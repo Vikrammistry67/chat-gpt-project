@@ -1,50 +1,25 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
-// API Key check
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// The client gets the API key from the environment variable `GEMINI_API_KEY`.
+const ai = new GoogleGenAI({});
 
-const generateResponse = async (fullHistory) => {
-    try {
-        // FIX: Model name strictly with 'models/' prefix for some SDK versions
-        const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
-
-        if (!fullHistory || fullHistory.length === 0) throw new Error("History empty");
-
-        // Aakhri message prompt nikalna
-        const lastMessage = fullHistory.pop();
-        const userPrompt = lastMessage.parts[0].text;
-
-        const chat = model.startChat({
-            history: fullHistory,
-        });
-
-        const result = await chat.sendMessage(userPrompt);
-        const response = await result.response;
-        return response.text();
-
-    } catch (error) {
-        console.error("Gemini Production Error:", error.message);
-        // User ko crash nahi, fallback message dikhao
-        return "AI is temporarily unavailable. Please try again.";
-    }
+const generateResponse = async (content) => {
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: content
+    });
+    return response.text;
 };
+
 
 const generateVectors = async (content) => {
-    try {
-        // Gemini Embedding Model
-        const model = genAI.getGenerativeModel({ model: "models/embedding-001" });
-
-        const result = await model.embedContent({
-            content: { parts: [{ text: content }] },
-            taskType: "RETRIEVAL_DOCUMENT",
+    const response = await ai.models.embedContent({
+        model: 'gemini-embedding-001',
+        contents: content,
+        config: {
             outputDimensionality: 768
-        });
-
-        return result.embedding.values;
-    } catch (error) {
-        console.error("Vector Generation Error:", error.message);
-        throw error;
-    }
-};
-
+        }
+    });
+    return response.embeddings[0].values;
+}
 module.exports = { generateResponse, generateVectors };
