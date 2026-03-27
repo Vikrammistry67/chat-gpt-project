@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ContextUser } from '../context/UserContext'; // Ensure this path is correct
+import { ContextUser } from '../context/UserContext';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,14 +15,12 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Responsive listener
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Show messages from logout/redirects
   useEffect(() => {
     if (location.state && location.state.message) {
       toast.info(location.state.message);
@@ -43,26 +41,21 @@ const Login = () => {
         withCredentials: true
       });
 
-      // Handle success for status 200 or 201
       if (response.status === 200 || response.status === 201) {
-
-        // 1. Show the Toast message immediately
-        toast.success('Logged in Successfully!', {
+        toast.success('Access Granted. Welcome back.', {
           position: "top-right",
-          autoClose: 1500, // Show for 1.5 seconds
+          autoClose: 1500,
           theme: "dark",
         });
 
-        // 2. Update the Global Context User
         setUser(response.data.user);
 
-        // 3. WAIT before navigating (This is why it wasn't showing before)
         setTimeout(() => {
           navigate('/gpt');
         }, 1600);
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Invalid Email or Password";
+      const errorMsg = error.response?.data?.message || "Authentication Failed";
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -71,9 +64,9 @@ const Login = () => {
 
   const inputStyle = {
     width: '100%',
-    height: '55px',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    height: '60px',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
     borderRadius: '16px',
     color: '#fff',
     padding: '0 20px',
@@ -81,50 +74,75 @@ const Login = () => {
     outline: 'none',
     marginBottom: '20px',
     boxSizing: 'border-box',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+    fontFamily: '"Space Grotesk", sans-serif'
   };
 
   return (
     <div style={{
       width: '100%',
-      minHeight: 'calc(100vh - 64px)',
-      backgroundColor: '#050505',
+      minHeight: '100vh',
+      backgroundColor: '#000',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '24px',
       position: 'relative',
-      fontFamily: '"Inter", sans-serif',
+      fontFamily: '"Space Grotesk", sans-serif',
       overflow: 'hidden'
-    }}>
-      {/* Aesthetic Background Glow */}
-      <div style={{ position: 'absolute', width: '400px', height: '400px', background: 'rgba(16, 185, 129, 0.15)', filter: 'blur(100px)', zIndex: 0 }}></div>
 
-      <div style={{
+    }}>
+
+      {/* --- BACKGROUND MESH (Matches Home) --- */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <div style={{
+          position: 'absolute', top: '10%', right: '-10%', width: '50%', height: '50%',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
+          filter: 'blur(100px)'
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '10%', left: '-10%', width: '50%', height: '50%',
+          background: 'radial-gradient(circle, rgba(147, 51, 234, 0.05) 0%, transparent 70%)',
+          filter: 'blur(100px)'
+        }} />
+      </div>
+
+      <style>{`
+        input:focus { border-color: rgba(59, 130, 246, 0.5) !important; background: rgba(59, 130, 246, 0.03) !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .login-card { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .submit-btn:active { transform: scale(0.98); }
+      `}</style>
+
+      {/* --- LOGIN CARD --- */}
+      <div className="login-card" style={{
         width: '100%',
-        maxWidth: '420px',
-        backgroundColor: 'rgba(15, 15, 15, 0.8)',
-        backdropFilter: 'blur(20px)',
+        maxWidth: '440px',
+        marginTop: '80px',
+        backgroundColor: 'rgba(10, 10, 10, 0.6)',
+        backdropFilter: 'blur(40px)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '32px',
-        padding: isMobile ? '40px 24px' : '50px 40px',
+        borderRadius: '35px',
+        padding: isMobile ? '40px 24px' : '60px 50px',
         zIndex: 1,
-        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 40px 100px rgba(0, 0, 0, 0.8)',
         textAlign: 'center'
       }}>
 
         <div style={{
-          width: '50px', height: '50px',
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          borderRadius: '14px', margin: '0 auto 24px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '24px', color: 'white'
+          width: '55px', height: '55px',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
+          borderRadius: '16px', margin: '0 auto 30px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: '950', fontSize: '22px', color: 'white',
+          boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)'
         }}>V</div>
 
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: 'white', letterSpacing: '-1px' }}>
-          Welcome <span style={{ color: '#10b981' }}>Back</span>
+        <h1 style={{ fontSize: '32px', fontWeight: '900', marginBottom: '10px', color: 'white', letterSpacing: '-1.5px' }}>
+          Welcome <span style={{ color: '#3b82f6' }}>Back</span>
         </h1>
-        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
-          Access your secure AI workspace
+        <p style={{ color: '#94a3b8', fontSize: '15px', marginBottom: '40px', fontWeight: '500' }}>
+          Resume your neural session.
         </p>
 
         <form onSubmit={submitHandler}>
@@ -134,7 +152,7 @@ const Login = () => {
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             value={email}
-            placeholder='Email Address'
+            placeholder='Enter Email'
             required
           />
 
@@ -144,54 +162,50 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             type="password"
             value={password}
-            placeholder='Password'
+            placeholder='Enter Password'
             required
           />
 
           <button
             disabled={loading}
+            className="submit-btn"
             type="submit"
             style={{
               width: '100%',
-              height: '55px',
-              backgroundColor: loading ? '#064e3b' : '#10b981',
+              height: '60px',
+              background: loading ? '#1e293b' : 'linear-gradient(90deg, #3b82f6, #9333ea)',
               color: 'white',
               border: 'none',
               borderRadius: '16px',
-              fontWeight: '700',
+              fontWeight: '900',
               fontSize: '16px',
+              letterSpacing: '1px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
-              transition: 'all 0.3s ease'
+              boxShadow: '0 15px 35px rgba(59, 130, 246, 0.25)',
+              transition: 'all 0.3s ease',
+              textTransform: 'uppercase'
             }}
           >
-            {loading ? "Authenticating..." : "Login"}
+            {loading ? "AUTHENTICATING..." : " LOGIN"}
           </button>
         </form>
 
-        <div style={{ marginTop: '32px', fontSize: '14px', color: '#64748b' }}>
-          Don't have an account? {' '}
+        <div style={{ marginTop: '40px', fontSize: '14px', color: '#64748b', fontWeight: '600' }}>
+          New to the system? {' '}
           <span
             onClick={() => navigate('/registerUser')}
-            style={{ color: '#10b981', fontWeight: '700', cursor: 'pointer' }}
+            style={{ color: '#3b82f6', cursor: 'pointer', marginLeft: '5px' }}
           >
-            Sign Up
+            CREATE ID
           </span>
         </div>
       </div>
 
-      {/* The Toast Container MUST be present here */}
       <ToastContainer
         position="top-right"
         autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
         theme="dark"
+        toastStyle={{ borderRadius: '16px', background: '#0a0a0a', border: '1px solid #333' }}
       />
     </div>
   );

@@ -3,136 +3,178 @@ import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
     const navigate = useNavigate();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY);
         const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('scroll', handleScroll);
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
-    const navLinkStyle = {
-        background: 'none',
-        border: 'none',
-        color: '#94a3b8',
-        fontSize: '14px',
-        fontWeight: '500',
-        cursor: 'pointer',
-        transition: 'color 0.2s'
-    };
+    // Animation Styles
+    const animations = `
+        @keyframes meshMove {
+            0% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0,0) scale(1); }
+        }
+        @keyframes textReveal {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bento-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; }
+        @media (hover: hover) {
+            .bento-card:hover { transform: translateY(-10px); border-color: rgba(59, 130, 246, 0.4) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        }
+        .bento-card:active { transform: scale(0.96); }
+    `;
 
     return (
         <div style={{
+            backgroundColor: '#000',
+            color: '#fff',
             minHeight: '100vh',
-            backgroundColor: '#050505',
-            color: '#ffffff',
-            display: 'flex',
-            flexDirection: 'column',
-            fontFamily: '"Inter", system-ui, sans-serif',
+            fontFamily: '"Space Grotesk", sans-serif',
             overflowX: 'hidden'
         }}>
+            <style>{animations}</style>
 
-            {/* --- PREMIUM NAVIGATION --- */}
+            {/* --- DYNAMIC MESH BACKGROUND --- */}
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                <div style={{
+                    position: 'absolute', top: '-10%', left: '-10%', width: '70%', height: '70%',
+                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%)',
+                    filter: 'blur(80px)', animation: 'meshMove 15s infinite linear'
+                }} />
+                <div style={{
+                    position: 'absolute', bottom: '0%', right: '-10%', width: '60%', height: '60%',
+                    background: 'radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, transparent 70%)',
+                    filter: 'blur(100px)', animation: 'meshMove 10s infinite linear reverse'
+                }} />
+            </div>
+
+            {/* --- FLOATING NAV --- */}
             <nav style={{
-                width: '100%',
-                height: '70px',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                backgroundColor: 'rgba(5, 5, 5, 0.7)',
-                backdropFilter: 'blur(12px)',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+                width: '90%', maxWidth: '1200px', zIndex: 1000,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 24px', borderRadius: '100px',
+                background: scrolled > 20 ? 'rgba(10, 10, 10, 0.7)' : 'rgba(255, 255, 255, 0.03)',
+                backdropFilter: 'blur(15px)', border: '1px solid rgba(255,255,255,0.08)',
+                transition: '0.4s ease'
             }}>
-
-
+                <div style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '-1.5px' }}>V.GPT</div>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <button onClick={() => navigate('/loginUser')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>LOGIN</button>
+                    <button onClick={() => navigate('/registerUser')} style={{ background: '#fff', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: '800', cursor: 'pointer' }}>JOIN</button>
+                </div>
             </nav>
 
-            {isMobile && isMenuOpen && (
-                <div style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1f2937', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <button onClick={() => navigate('/registerUser')} style={{ textAlign: 'left', ...navLinkStyle, fontSize: '18px' }}>Register</button>
-                    <button onClick={() => navigate('/loginUser')} style={{ textAlign: 'left', ...navLinkStyle, fontSize: '18px' }}>Login</button>
-                </div>
-            )}
-
-            <main style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: isMobile ? '60px 24px' : '100px 24px', textAlign: 'center', position: 'relative'
+            {/* --- HERO SECTION --- */}
+            <section style={{ 
+                height: '100vh', display: 'flex', flexDirection: 'column', 
+                justifyContent: 'center', alignItems: 'center', textAlign: 'center', 
+                padding: '0 24px', position: 'relative', zIndex: 10 
             }}>
-
-                <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)', width: '300px', height: '300px', background: 'rgba(16, 185, 129, 0.15)', filter: 'blur(100px)', borderRadius: '50%', zIndex: 0 }}></div>
-
-                <div style={{ maxWidth: '850px', zIndex: 1 }}>
-                    {/* Mini Badge */}
-                    <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '100px',
-                        backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        marginBottom: '32px', fontSize: '12px', fontWeight: '500', color: '#10b981'
-                    }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
-                        Built with Gemini 1.5 Pro
-                    </div>
-
-                    <h1 style={{
-                        fontSize: isMobile ? '42px' : '82px', fontWeight: '800', lineHeight: '1',
-                        marginBottom: '24px', letterSpacing: '-2px'
-                    }}>
-                        Design the <span style={{ color: '#94a3b8' }}>Future</span> with <br />
-                        <span style={{
-                            background: 'linear-gradient(to right, #10b981, #3b82f6)',
-                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-                        }}>Intelligent AI.</span>
-                    </h1>
-
-                    <p style={{
-                        fontSize: isMobile ? '16px' : '20px', color: '#94a3b8', lineHeight: '1.6',
-                        maxWidth: '600px', margin: '0 auto 48px auto'
-                    }}>
-                        Your personal workspace upgraded with vector memory and state-of-the-art reasoning. Experience the next generation of GPT.
-                    </p>
-
-                    <div style={{
-                        width: '100%', maxWidth: '420px', margin: '0 auto', padding: '40px',
-                        borderRadius: '32px', backgroundColor: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
-                    }}>
-                        <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '28px' }}>Get Started for Free</h3>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <button
-                                onClick={() => navigate('/registerUser')}
-                                style={{
-                                    padding: '16px', background: '#10b981', color: 'white', borderRadius: '14px',
-                                    fontWeight: '700', fontSize: '16px', border: 'none', cursor: 'pointer',
-                                    transition: 'transform 0.2s', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                                }}
-                                onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
-                                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                            >
-                                Create Account
-                            </button>
-
-                            <button
-                                onClick={() => navigate('/loginUser')}
-                                style={{
-                                    padding: '16px', background: 'rgba(255,255,255,0.05)', color: 'white',
-                                    borderRadius: '14px', fontWeight: '600', fontSize: '16px',
-                                    border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer'
-                                }}
-                            >
-                                Sign In
-                            </button>
-                        </div>
-                    </div>
+                <div style={{ 
+                    display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '100px',
+                    background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                    color: '#60a5fa', fontSize: '11px', fontWeight: '800', letterSpacing: '1.5px', marginBottom: '32px',
+                    animation: 'textReveal 0.8s ease-out'
+                }}>
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#60a5fa', boxShadow: '0 0 10px #60a5fa' }}></span>
+                    SYSTEM ONLINE_v2.0
                 </div>
-            </main>
 
-            <footer style={{ padding: '40px 0', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <p style={{ fontSize: '13px', color: '#475569' }}>© 2026 Vikram GPT. All rights reserved.</p>
+                <h1 style={{ 
+                    fontSize: isMobile ? '68px' : '150px', fontWeight: '950', 
+                    letterSpacing: isMobile ? '-4px' : '-12px', lineHeight: '0.82', marginBottom: '32px',
+                    background: 'linear-gradient(to bottom, #fff 60%, #475569)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                    animation: 'textReveal 1s ease-out 0.2s backwards'
+                }}>
+                    BEYOND <br /> HUMAN.
+                </h1>
+
+                <p style={{ 
+                    fontSize: isMobile ? '18px' : '22px', color: '#94a3b8', 
+                    maxWidth: '550px', margin: '0 auto 48px', lineHeight: '1.4',
+                    animation: 'textReveal 1s ease-out 0.4s backwards'
+                }}>
+                    The future of synthetic reasoning is here. <br /> Built for Vikram. Vectorized. Infinite.
+                </p>
+
+                <div style={{ display: 'flex', gap: '15px', width: isMobile ? '100%' : 'auto', animation: 'textReveal 1s ease-out 0.6s backwards' }}>
+                    <button 
+                        onClick={() => navigate('/registerUser')}
+                        style={{ 
+                            flex: 1, padding: '20px 45px', borderRadius: '16px', background: '#3b82f6', 
+                            color: '#fff', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer',
+                            boxShadow: '0 20px 40px rgba(59, 130, 246, 0.25)'
+                        }}
+                    >
+                        Initialize Link
+                    </button>
+                </div>
+            </section>
+
+            {/* --- RESPONSIVE BENTO SECTION --- */}
+            <section style={{ 
+                maxWidth: '1200px', margin: '0 auto', padding: '24px', 
+                display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(12, 1fr)', 
+                gap: '16px', position: 'relative', zIndex: 10 
+            }}>
+                
+                {/* Big Card */}
+                <div className="bento-card" style={{ 
+                    gridColumn: isMobile ? 'auto' : 'span 8', minHeight: '380px', 
+                    background: 'rgba(15, 15, 15, 0.4)', backdropFilter: 'blur(40px)', 
+                    borderRadius: '32px', border: '1px solid rgba(255, 255, 255, 0.05)', 
+                    padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+                }}>
+                    <div>
+                        <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: '800', marginBottom: '10px' }}>01_CORE_MASTERY</div>
+                        <h2 style={{ fontSize: isMobile ? '32px' : '42px', fontWeight: '900', letterSpacing: '-1.5px' }}>High-Precision <br/> Vector Search.</h2>
+                    </div>
+                    <div style={{ width: '60px', height: '2px', background: '#3b82f6' }}></div>
+                </div>
+
+                {/* Speed Card */}
+                <div className="bento-card" style={{ 
+                    gridColumn: isMobile ? 'auto' : 'span 4', height: '380px', 
+                    background: 'rgba(255, 255, 255, 0.02)', borderRadius: '32px', 
+                    border: '1px solid rgba(255, 255, 255, 0.05)', padding: '32px',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '72px', fontWeight: '950', color: '#3b82f6' }}>0.2s</div>
+                    <div style={{ fontSize: '10px', fontWeight: '900', letterSpacing: '4px', color: '#475569' }}>LATENCY_P99</div>
+                </div>
+
+                {/* Full Width Call-to-Action */}
+                <div className="bento-card" style={{ 
+                    gridColumn: isMobile ? 'auto' : 'span 12', padding: isMobile ? '60px 24px' : '100px 40px', 
+                    background: 'linear-gradient(135deg, #0f172a, #000)', borderRadius: '32px', 
+                    border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center'
+                }}>
+                    <h3 style={{ fontSize: isMobile ? '36px' : '64px', fontWeight: '900', marginBottom: '40px', letterSpacing: '-3px' }}>The Evolution Begins.</h3>
+                    <button 
+                        onClick={() => navigate('/registerUser')}
+                        style={{ padding: '20px 50px', borderRadius: '100px', background: '#fff', color: '#000', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer' }}
+                    >
+                        START YOUR SESSION
+                    </button>
+                </div>
+            </section>
+
+            <footer style={{ padding: '80px 24px', textAlign: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.03)', color: '#475569', fontSize: '11px', letterSpacing: '2px' }}>
+                © 2026 VIKRAM_GPT_OS // ALL SYSTEMS OPERATIONAL
             </footer>
         </div>
     );

@@ -1,204 +1,138 @@
-import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import { io } from "socket.io-client";
+import React, { useState, useEffect, useRef } from 'react';
 
-const GptUI = () => {
-    const [messages, setMessages] = useState("");
-    const [chatLog, setChatLog] = useState([]);
-    const [recentChats, setRecentChats] = useState([]);
-    const [activeChatId, setActiveChatId] = useState(null);
-    const [socket, setSocket] = useState(null);
-    const [isChatting, setIsChatting] = useState(false);
-
-    // NEW: Loading state for AI
-    const [isTyping, setIsTyping] = useState(false);
+const GPTUI = () => {
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [input, setInput] = useState('');
+    const [messages] = useState([
+        { role: 'bot', content: 'Header removed. The chat now utilizes 100% of the vertical screen real estate.' }
+    ]);
 
     const scrollRef = useRef(null);
 
-    // Auto-scroll logic
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [chatLog, isTyping]);
-
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                const res = await axios.get('https://chat-gpt-project-4iip.onrender.com/api/chat', { withCredentials: true });
-                setRecentChats(res.data.chats || []);
-            } catch (err) {
-                console.error("Error fetching sidebar:", err);
-            }
-        };
-        fetchInitialData();
-
-        const newSocket = io('https://chat-gpt-project-4iip.onrender.com', { withCredentials: true });
-        setSocket(newSocket);
-
-        // FIX: Event name matches your backend "ai-generated-response"
-        newSocket.on('ai-generated-response', (data) => {
-            setIsTyping(false); // Stop loading
-            setChatLog((prev) => [...prev, { role: 'model', content: data.content }]);
-        });
-
-        return () => newSocket.close();
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const loadChatMessages = async (chatId) => {
-        try {
-            setActiveChatId(chatId);
-            setIsChatting(true);
-            const res = await axios.get(`https://chat-gpt-project-4iip.onrender.com/api/chat/messages/${chatId}`, { withCredentials: true });
-            setChatLog(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error("Error loading messages:", err);
-        }
-    };
+    const isMobile = windowWidth < 768;
 
-    const handleNewChat = async () => {
-        const title = window.prompt("New Chat Name:");
-        if (!title) return;
-        try {
-            const res = await axios.post('https://chat-gpt-project-4iip.onrender.com/api/chat', { title }, { withCredentials: true });
-            const newChat = res.data.chat || res.data;
-            setRecentChats(prev => [newChat, ...prev]);
-            setActiveChatId(newChat._id);
-            setChatLog([]);
-            setIsChatting(true);
-        } catch (error) {
-            console.error("Error creating chat:", error);
-        }
-    };
-
-    const inputDataHandler = async (e) => {
-        e.preventDefault();
-        if (!socket || !messages.trim() || !activeChatId) return;
-
-        const content = messages;
-        setMessages("");
-
-        // 1. Add user message
-        setChatLog(prev => [...prev, { role: 'user', content }]);
-
-        // 2. Start Loading State
-        setIsTyping(true);
-
-        // 3. Emit to server
-        socket.emit('ai-message', {
-            chat: activeChatId,
-            content: content
-        });
-    };
+    const IconMenu = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>;
+    const IconSend = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>;
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: window.innerWidth < 768 ? 'column' : 'row', // Mobile Responsive stack
-            height: '100vh',
-            backgroundColor: '#212121',
-            color: 'white',
-            fontFamily: 'sans-serif'
-        }}>
+        <div style={{ display: 'flex', height: '100dvh', width: '100vw', backgroundColor: '#050505', color: '#ececec', overflow: 'hidden', margin: 0, padding: 0 }}>
 
-            {/* SIDEBAR (Top on Mobile, Left on Desktop) */}
-            <div style={{
-                width: window.innerWidth < 768 ? '100%' : '260px',
-                height: window.innerWidth < 768 ? 'auto' : '100%',
-                backgroundColor: '#171717',
-                padding: '15px',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRight: '1px solid #333',
-                boxSizing: 'border-box'
-            }}>
-                <button onClick={handleNewChat} style={{ padding: '10px', cursor: 'pointer', borderRadius: '8px', border: '1px solid #4d4d4d', backgroundColor: '#212121', color: 'white', marginBottom: '10px' }}>
-                    + New Chat
-                </button>
-
-                <div style={{
+            {/* 1. SIDEBAR */}
+            <aside
+                style={{
+                    width: '260px',
+                    marginTop: '100px',
+                    backgroundColor: '#0D0D0D',
+                    borderRight: '1px solid rgba(255,255,255,0.05)',
                     display: 'flex',
-                    flexDirection: window.innerWidth < 768 ? 'row' : 'column',
-                    overflowX: 'auto',
-                    gap: '10px'
-                }}>
-                    {recentChats.map((chat) => (
-                        <div key={chat._id} onClick={() => loadChatMessages(chat._id)} style={{
-                            padding: '8px 12px', cursor: 'pointer', borderRadius: '6px',
-                            backgroundColor: activeChatId === chat._id ? '#2f2f2f' : 'transparent',
-                            fontSize: '13px', whiteSpace: 'nowrap', border: '1px solid #333'
-                        }}>
-                            {chat.title || "Chat"}
-                        </div>
+                    flexDirection: 'column',
+                    transition: 'transform 0.3s ease-in-out',
+                    zIndex: 1000,
+                    position: isMobile ? 'fixed' : 'relative',
+                    height: '100%',
+                    transform: (isMobile && !isSidebarOpen) ? 'translateX(-100%)' : 'translateX(0)',
+                }}
+            >
+                {/* Brand & New Chat Section */}
+                <div style={{ padding: '40px 16px 20px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '30px', padding: '0 8px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '6px', backgroundColor: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>V</div>
+                        <span style={{ fontSize: '14px', fontWeight: 'bold', letterSpacing: '1px' }}>VIKRAM.GPT</span>
+                    </div>
+                    <button style={{ width: '100%', padding: '14px', backgroundColor: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+                        + New Chat
+                    </button>
+                </div>
+
+                {/* History */}
+                <nav style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+                    <p style={{ fontSize: '10px', color: '#444', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px', paddingLeft: '8px' }}>History</p>
+                    {['Project Beta', 'Auth Fix', 'UI Design'].map((t, i) => (
+                        <div key={i} style={{ padding: '12px', fontSize: '14px', color: '#888', borderRadius: '8px', cursor: 'pointer', transition: '0.2s' }}>{t}</div>
                     ))}
+                </nav>
+
+                {/* Bottom Sidebar Actions */}
+                <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <button style={{ width: '100%', padding: '12px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                        LOGOUT
+                    </button>
                 </div>
-            </div>
+            </aside>
 
-            {/* MAIN CHAT AREA */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* 2. MAIN CONTENT AREA */}
+            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, position: 'relative' }}>
 
-                <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-                    {!isChatting ? (
-                        <div style={{ textAlign: 'center', marginTop: '30%' }}>
-                            <h2>How can I help?</h2>
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {chatLog.map((msg, index) => {
-                                const isUser = msg.role === 'user';
-                                return (
-                                    <div key={index} style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
-                                        <div style={{ fontSize: '10px', color: isUser ? '#888' : '#10a37f', marginBottom: '4px', textAlign: isUser ? 'right' : 'left' }}>
-                                            {isUser ? 'YOU' : 'GPT'}
-                                        </div>
-                                        <div style={{
-                                            padding: '12px 16px', borderRadius: '15px',
-                                            backgroundColor: isUser ? '#3b3b3b' : '#2f2f2f',
-                                            borderBottomRightRadius: isUser ? '2px' : '15px',
-                                            borderBottomLeftRadius: isUser ? '15px' : '2px',
-                                            fontSize: '14px', lineHeight: '1.4'
-                                        }}>
-                                            {msg.content}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                {/* FLOATING MOBILE MENU BUTTON */}
+                {isMobile && (
+                    <button
+                        onClick={() => setSidebarOpen(true)}
+                        style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 100, background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}
+                    >
+                        <IconMenu />
+                    </button>
+                )}
 
-                            {/* LOADING MESSAGE */}
-                            {isTyping && (
-                                <div style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
-                                    <div style={{ fontSize: '10px', color: '#10a37f', marginBottom: '4px' }}>GPT</div>
-                                    <div style={{ padding: '12px 16px', borderRadius: '15px', backgroundColor: '#2f2f2f', color: '#888', fontStyle: 'italic', fontSize: '14px' }}>
-                                        GPT is thinking...
-                                    </div>
+                {/* CHAT MESSAGES - Now starts from the very top */}
+                <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '80px 16px 20px 16px' : '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ width: '100%', maxWidth: '760px' }}>
+                        {messages.map((msg, i) => (
+                            <div key={i} style={{ display: 'flex', gap: '20px', marginBottom: '40px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+                                <div style={{
+                                    width: '34px', height: '34px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                    backgroundColor: msg.role === 'user' ? '#4F46E5' : '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                    <span style={{ fontSize: '10px', fontWeight: 'bold' }}>{msg.role === 'user' ? 'U' : 'AI'}</span>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                                <div style={{ color: msg.role === 'user' ? 'white' : '#d1d1d1', fontSize: '15px', lineHeight: '1.7', flex: 1, paddingTop: '4px' }}>
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ))}
+                        <div style={{ height: '150px' }} />
+                    </div>
                 </div>
 
-                {/* INPUT */}
-                <div style={{ padding: '15px', backgroundColor: '#212121' }}>
-                    <form onSubmit={inputDataHandler} style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                            disabled={!activeChatId || isTyping}
-                            value={messages}
-                            onChange={(e) => setMessages(e.target.value)}
-                            placeholder={isTyping ? "Waiting for response..." : "Ask anything..."}
-                            style={{
-                                flex: 1, padding: '14px', borderRadius: '25px',
-                                backgroundColor: '#2f2f2f', border: '1px solid #4d4d4d',
-                                color: 'white', outline: 'none'
-                            }}
-                        />
-                        <button type="submit" disabled={!messages.trim() || isTyping} style={{ backgroundColor: '#10a37f', border: 'none', borderRadius: '50%', width: '45px', height: '45px', color: 'white', cursor: 'pointer' }}>
-                            ↑
-                        </button>
-                    </form>
+                {/* INPUT BAR */}
+                <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    padding: isMobile ? '20px 16px 30px 16px' : '30px 20px 50px 20px',
+                    background: 'linear-gradient(transparent, #050505 50%)',
+                    display: 'flex', justifyContent: 'center'
+                }}>
+                    <div style={{ width: '100%', maxWidth: '760px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '8px 12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Message Vikram.GPT..."
+                                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', padding: '12px', fontSize: '15px' }}
+                            />
+                            <button style={{ padding: '12px', backgroundColor: 'white', border: 'none', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <IconSend />
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                {/* Mobile Overlay */}
+                {isMobile && isSidebarOpen && (
+                    <div
+                        onClick={() => setSidebarOpen(false)}
+                        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', zIndex: 900 }}
+                    />
+                )}
+            </main>
         </div>
     );
 };
 
-export default GptUI;
+export default GPTUI;
