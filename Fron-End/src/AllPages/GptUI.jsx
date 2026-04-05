@@ -23,7 +23,7 @@ const GPTUI = () => {
     const IconSend = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>;
 
     return (
-        <div style={{ display: 'flex', height: '100dvh', width: '100vw', backgroundColor: '#050505', color: '#ececec', overflow: 'hidden', margin: 0, padding: 0 }}>
+        <div style={{ display: 'flex',height: '100dvh', width: '100vw', backgroundColor: '#050505', color: '#ececec', overflow: 'hidden', margin: 0, padding: 0 }}>
 
             {/* 1. SIDEBAR */}
             <aside

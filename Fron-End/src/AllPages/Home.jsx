@@ -1,180 +1,204 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useScroll, useTransform } from 'framer-motion'; // Install via: npm install framer-motion
+import { ArrowRight, Cpu, Zap, Shield, ChevronRight } from 'lucide-react'; // Install via: npm install lucide-react
 
 const Home = () => {
     const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(0);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const { scrollY } = useScroll();
+
+    // Parallax values for hero elements
+    const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+    const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY);
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
         window.addEventListener('scroll', handleScroll);
-        window.addEventListener('resize', handleResize);
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleResize);
-        };
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Animation Styles
-    const animations = `
-        @keyframes meshMove {
-            0% { transform: translate(0,0) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0,0) scale(1); }
+    const premiumStyles = `
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        
+        body { background-color: #000; margin: 0; overflow-x: hidden; }
+        
+        .noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.05; pointer-events: none; z-index: 9999;
         }
-        @keyframes textReveal {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .bento-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; }
-        @media (hover: hover) {
-            .bento-card:hover { transform: translateY(-10px); border-color: rgba(59, 130, 246, 0.4) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
         }
-        .bento-card:active { transform: scale(0.96); }
+
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, #1e40af 0%, transparent 50%);
+            filter: blur(120px);
+            opacity: 0.15;
+        }
+
+        .glow-btn {
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+        
+        .glow-btn::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: 0.5s;
+        }
+
+        .glow-btn:hover::after { transform: translateX(100%); }
     `;
 
     return (
-        <div style={{
-            backgroundColor: '#000',
-            color: '#fff',
-            minHeight: '100vh',
-            fontFamily: '"Space Grotesk", sans-serif',
-            overflowX: 'hidden'
-        }}>
-            <style>{animations}</style>
+        <div style={{ color: '#fff', paddingTop: '30px', fontFamily: '"Space Grotesk", sans-serif' }}>
+            <style>{premiumStyles}</style>
+            <div className="noise" />
 
-            {/* --- DYNAMIC MESH BACKGROUND --- */}
-            <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                <div style={{
-                    position: 'absolute', top: '-10%', left: '-10%', width: '70%', height: '70%',
-                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%)',
-                    filter: 'blur(80px)', animation: 'meshMove 15s infinite linear'
-                }} />
-                <div style={{
-                    position: 'absolute', bottom: '0%', right: '-10%', width: '60%', height: '60%',
-                    background: 'radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, transparent 70%)',
-                    filter: 'blur(100px)', animation: 'meshMove 10s infinite linear reverse'
-                }} />
-            </div>
+            {/* Background Orbs */}
+            <div className="hero-gradient" style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: -1 }} />
 
-            {/* --- FLOATING NAV --- */}
+            {/* --- NAVBAR --- */}
             <nav style={{
-                position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
-                width: '90%', maxWidth: '1200px', zIndex: 1000,
+                position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+                width: '90%', maxWidth: '1000px', zIndex: 1000,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '12px 24px', borderRadius: '100px',
-                background: scrolled > 20 ? 'rgba(10, 10, 10, 0.7)' : 'rgba(255, 255, 255, 0.03)',
-                backdropFilter: 'blur(15px)', border: '1px solid rgba(255,255,255,0.08)',
-                transition: '0.4s ease'
+                padding: '10px 20px', borderRadius: '100px',
+                background: scrolled > 50 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
+                transition: '0.4s'
             }}>
-                <div style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '-1.5px' }}>V.GPT</div>
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <button onClick={() => navigate('/loginUser')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>LOGIN</button>
-                    <button onClick={() => navigate('/registerUser')} style={{ background: '#fff', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: '800', cursor: 'pointer' }}>JOIN</button>
+                <div style={{ fontWeight: '700', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '12px', height: '12px', background: '#3b82f6', borderRadius: '2px' }} />
+                    V_GPT
+                </div>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }} onClick={() => navigate('/loginUser')}>LOG IN</span>
+                    <button
+                        onClick={() => navigate('/registerUser')}
+                        className="glow-btn"
+                        style={{ background: '#fff', color: '#000', border: 'none', padding: '8px 18px', borderRadius: '100px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                        GET STARTED
+                    </button>
                 </div>
             </nav>
 
-            {/* --- HERO SECTION --- */}
-            <section style={{ 
-                height: '100vh', display: 'flex', flexDirection: 'column', 
-                justifyContent: 'center', alignItems: 'center', textAlign: 'center', 
-                padding: '0 24px', position: 'relative', zIndex: 10 
-            }}>
-                <div style={{ 
-                    display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '100px',
-                    background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
-                    color: '#60a5fa', fontSize: '11px', fontWeight: '800', letterSpacing: '1.5px', marginBottom: '32px',
-                    animation: 'textReveal 0.8s ease-out'
-                }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#60a5fa', boxShadow: '0 0 10px #60a5fa' }}></span>
-                    SYSTEM ONLINE_v2.0
-                </div>
-
-                <h1 style={{ 
-                    fontSize: isMobile ? '68px' : '150px', fontWeight: '950', 
-                    letterSpacing: isMobile ? '-4px' : '-12px', lineHeight: '0.82', marginBottom: '32px',
-                    background: 'linear-gradient(to bottom, #fff 60%, #475569)',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                    animation: 'textReveal 1s ease-out 0.2s backwards'
-                }}>
-                    BEYOND <br /> HUMAN.
-                </h1>
-
-                <p style={{ 
-                    fontSize: isMobile ? '18px' : '22px', color: '#94a3b8', 
-                    maxWidth: '550px', margin: '0 auto 48px', lineHeight: '1.4',
-                    animation: 'textReveal 1s ease-out 0.4s backwards'
-                }}>
-                    The future of synthetic reasoning is here. <br /> Built for Vikram. Vectorized. Infinite.
-                </p>
-
-                <div style={{ display: 'flex', gap: '15px', width: isMobile ? '100%' : 'auto', animation: 'textReveal 1s ease-out 0.6s backwards' }}>
-                    <button 
-                        onClick={() => navigate('/registerUser')}
-                        style={{ 
-                            flex: 1, padding: '20px 45px', borderRadius: '16px', background: '#3b82f6', 
-                            color: '#fff', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer',
-                            boxShadow: '0 20px 40px rgba(59, 130, 246, 0.25)'
-                        }}
-                    >
-                        Initialize Link
-                    </button>
-                </div>
-            </section>
-
-            {/* --- RESPONSIVE BENTO SECTION --- */}
-            <section style={{ 
-                maxWidth: '1200px', margin: '0 auto', padding: '24px', 
-                display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(12, 1fr)', 
-                gap: '16px', position: 'relative', zIndex: 10 
-            }}>
-                
-                {/* Big Card */}
-                <div className="bento-card" style={{ 
-                    gridColumn: isMobile ? 'auto' : 'span 8', minHeight: '380px', 
-                    background: 'rgba(15, 15, 15, 0.4)', backdropFilter: 'blur(40px)', 
-                    borderRadius: '32px', border: '1px solid rgba(255, 255, 255, 0.05)', 
-                    padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
-                }}>
-                    <div>
-                        <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: '800', marginBottom: '10px' }}>01_CORE_MASTERY</div>
-                        <h2 style={{ fontSize: isMobile ? '32px' : '42px', fontWeight: '900', letterSpacing: '-1.5px' }}>High-Precision <br/> Vector Search.</h2>
+            {/* --- HERO --- */}
+            <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                <motion.div style={{ opacity }}>
+                    <div style={{ color: '#3b82f6', fontSize: '12px', fontWeight: '700', letterSpacing: '4px', marginBottom: '20px' }}>
+                        NEXT-GEN COGNITION
                     </div>
-                    <div style={{ width: '60px', height: '2px', background: '#3b82f6' }}></div>
-                </div>
+                    <h1 style={{
+                        fontSize: 'clamp(3rem, 10vw, 8rem)', fontWeight: '700', lineHeight: 0.9,
+                        letterSpacing: '-0.05em', marginBottom: '30px'
+                    }}>
+                        UNLIMITED <br /> <span style={{ color: '#475569' }}>INTELLIGENCE.</span>
+                    </h1>
+                    <p style={{ maxWidth: '600px', color: '#94a3b8', fontSize: '1.2rem', marginBottom: '40px', lineHeight: 1.6 }}>
+                        Designed for the elite. Vectorized reasoning at the speed of thought.
+                        Join the Vikram-exclusive neural network.
+                    </p>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <button
+                            onClick={() => navigate('/registerUser')}
+                            style={{
+                                background: '#3b82f6', padding: '18px 36px', borderRadius: '12px',
+                                border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: '10px'
+                            }}
+                        >
+                            Start Session <ArrowRight size={18} />
 
-                {/* Speed Card */}
-                <div className="bento-card" style={{ 
-                    gridColumn: isMobile ? 'auto' : 'span 4', height: '380px', 
-                    background: 'rgba(255, 255, 255, 0.02)', borderRadius: '32px', 
-                    border: '1px solid rgba(255, 255, 255, 0.05)', padding: '32px',
-                    display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '72px', fontWeight: '950', color: '#3b82f6' }}>0.2s</div>
-                    <div style={{ fontSize: '10px', fontWeight: '900', letterSpacing: '4px', color: '#475569' }}>LATENCY_P99</div>
-                </div>
+                        </button>
+                    </div>
+                </motion.div>
+            </section>
 
-                {/* Full Width Call-to-Action */}
-                <div className="bento-card" style={{ 
-                    gridColumn: isMobile ? 'auto' : 'span 12', padding: isMobile ? '60px 24px' : '100px 40px', 
-                    background: 'linear-gradient(135deg, #0f172a, #000)', borderRadius: '32px', 
-                    border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center'
-                }}>
-                    <h3 style={{ fontSize: isMobile ? '36px' : '64px', fontWeight: '900', marginBottom: '40px', letterSpacing: '-3px' }}>The Evolution Begins.</h3>
-                    <button 
-                        onClick={() => navigate('/registerUser')}
-                        style={{ padding: '20px 50px', borderRadius: '100px', background: '#fff', color: '#000', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer' }}
+            {/* --- BENTO GRID --- */}
+            <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 24px', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px' }}>
+
+                {/* Main Feature */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="glass-card"
+                    style={{ gridColumn: 'span 8', padding: '40px', borderRadius: '32px', minHeight: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                >
+                    <Cpu color="#3b82f6" size={32} />
+                    <div>
+                        <h2 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>Neural Architecture</h2>
+                        <p style={{ color: '#94a3b8' }}>Proprietary models optimized for extreme logic tasks and real-time synthesis.</p>
+                    </div>
+                </motion.div>
+
+                {/* Metric Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 }}
+                    className="glass-card"
+                    style={{ gridColumn: 'span 4', padding: '40px', borderRadius: '32px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                >
+                    <div style={{ fontSize: '4rem', fontWeight: '700', color: '#3b82f6' }}>99.9</div>
+                    <div style={{ fontSize: '12px', color: '#475569', letterSpacing: '2px' }}>ACCURACY_SCORE</div>
+                </motion.div>
+
+                {/* Sub Features */}
+                {['Security', 'Velocity', 'Scalability'].map((item, i) => (
+                    <motion.div
+                        key={item}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                        className="glass-card"
+                        style={{ gridColumn: 'span 4', padding: '30px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px' }}
                     >
-                        START YOUR SESSION
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {i === 0 ? <Shield size={20} color="#3b82f6" /> : i === 1 ? <Zap size={20} color="#3b82f6" /> : <ChevronRight size={20} color="#3b82f6" />}
+                        </div>
+                        <span style={{ fontWeight: '600' }}>{item}</span>
+                    </motion.div>
+                ))}
+            </section>
+
+            {/* --- CTA SECTION --- */}
+            <section style={{ padding: '150px 24px', textAlign: 'center' }}>
+                <div style={{
+                    maxWidth: '800px', margin: '0 auto', padding: '80px 40px', borderRadius: '40px',
+                    background: 'linear-gradient(to bottom, #111, #000)', border: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                    <h2 style={{ fontSize: '3rem', marginBottom: '24px' }}>Ready to interface?</h2>
+                    <button
+                        onClick={() => navigate('/registerUser')}
+                        style={{ background: '#fff', color: '#000', padding: '20px 50px', borderRadius: '100px', border: 'none', fontWeight: '800', cursor: 'pointer' }}
+                    >
+                        JOIN THE WAITLIST
                     </button>
                 </div>
             </section>
 
-            <footer style={{ padding: '80px 24px', textAlign: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.03)', color: '#475569', fontSize: '11px', letterSpacing: '2px' }}>
-                © 2026 VIKRAM_GPT_OS // ALL SYSTEMS OPERATIONAL
+            <footer style={{ padding: '40px', textAlign: 'center', opacity: 0.4, fontSize: '12px' }}>
+                V_GPT // ENCRYPTED CONNECTION ESTABLISHED // 2026
             </footer>
         </div>
     );

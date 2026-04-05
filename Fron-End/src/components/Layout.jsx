@@ -6,7 +6,6 @@ import Footer from './footerComponent/Footer'
 const Layout = () => {
     return (
         <div>
-            <Navbar />
             <AppRoute />
         </div>
     )

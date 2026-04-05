@@ -85,6 +85,8 @@ const Register = () => {
 
             {/* MAIN CARD */}
             <div style={{
+                marginTop: '90px',
+                height: 'fit-content',
                 width: '100%',
                 maxWidth: '480px',
                 backgroundColor: 'rgba(17, 24, 39, 0.7)', // Slate 900
